@@ -1,0 +1,19 @@
+# Ignore virtual environment folder
+venv/
+
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables file
+.env
+
+# MacOS-specific ignores
+.DS_Store
+
+# Other potentially large or sensitive files to ignore
+*.log
+*.sqlite3

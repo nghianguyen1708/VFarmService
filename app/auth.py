@@ -6,11 +6,10 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app import crud
 from app.database import SessionLocal
+from config import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Secret key to encode JWT
-SECRET_KEY = "F8Cllf778gXBjNdzvBOFTWEWDkjaIvRY"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 600
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

@@ -1,6 +1,7 @@
 # app/main.py
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException, Cookie, Response, status, Request
+from uuid import uuid4
+from fastapi import FastAPI, Depends, HTTPException, Response, status, Request
 from sqlalchemy.orm import Session
 from app import models, schemas, crud
 from app.database import SessionLocal, engine
@@ -49,7 +50,8 @@ oauth.register(
     client_kwargs={
         'scope': 'email openid profile',
         'redirect_url': REDIRECT_URI
-    }
+    },
+    authorize_state=SECRET_KEY
 )
 
 
@@ -129,10 +131,12 @@ async def login_with_google(request: Request):
 
 @app.get("/auth/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
+
+    # Complete the OAuth flow
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as e:
-        return JSONResponse(content={"error": e.error})
+        return JSONResponse(content={"error": e.error, "error_description": e.description, "error_uri": e.uri})
     user_info = await oauth.google.parse_id_token(request, token)
 
     user = crud.get_user_by_username(db, username=user_info['email'])

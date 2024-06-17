@@ -2,17 +2,21 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
-class UserCreate(BaseModel):
-    username: str
-    password: str
-
 class User(BaseModel):
     id: int
     username: str
+    email: str  # New field
+    full_name: Optional[str] = None  # New field
     created_at: datetime
 
     class Config:
         orm_mode = True
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: str  # New field
+    full_name: Optional[str] = None  # New field
 
 class ChatBoxCreate(BaseModel):
     name: str

@@ -4,8 +4,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from . import crud
-from .database import SessionLocal
+from app import crud
+from app.database import SessionLocal
 
 # Secret key to encode JWT
 SECRET_KEY = "F8Cllf778gXBjNdzvBOFTWEWDkjaIvRY"
@@ -60,11 +60,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # Check if token has expired
         if datetime.now() > datetime.fromtimestamp(token_exp):
             raise credentials_exception
-        return payload
+        user = crud.get_user_by_username(db, username=username)
+        if user is None:
+            raise credentials_exception
+        return user
     except JWTError:
         raise credentials_exception
-    user = crud.get_user_by_username(db, username=username)
-    if user is None:
-        raise credentials_exception
-    return user
-

@@ -18,6 +18,10 @@ class UserCreate(BaseModel):
     email: str  # New field
     full_name: Optional[str] = None  # New field
 
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 class ChatBoxCreate(BaseModel):
     name: str
 

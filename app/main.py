@@ -1,6 +1,5 @@
 # app/main.py
 from typing import List
-from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException, Response, status, Request
 from sqlalchemy.orm import Session
 from app import models, schemas, crud
@@ -14,6 +13,8 @@ from fastapi_sqlalchemy import DBSessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from starlette.middleware.sessions import SessionMiddleware
 from config import SECRET_KEY, DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, HOST
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -29,7 +30,21 @@ async def lifespan(app: FastAPI):
     # Shutdown event
     logger.info("Application Vfarm shutdown.")
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 app = FastAPI(lifespan=lifespan)
+origins = [
+    "http://localhost",
+    "http://localhost:8888",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Middleware to manage database sessions
 app.add_middleware(DBSessionMiddleware, db_url=DATABASE_URL)
 # Configure SessionMiddleware
@@ -42,18 +57,15 @@ oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
     redirect_uri=REDIRECT_URI,
     client_kwargs={
-        'scope': 'email openid profile',
+        'scope': 'email profile openid',
         'redirect_url': REDIRECT_URI
     },
     authorize_state=SECRET_KEY
 )
-
 
 # Dependency to get the DB session
 def get_db():
@@ -75,10 +87,14 @@ async def http_exception_handler(request, exc):
 async def generic_exception_handler(request, exc):
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"message": "Something went wrong"},
+        content={"message": "Something went wrong", "error": str(exc), "request": str(request)},
     )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+@app.get("/debug")
+async def debug_session(request: Request):
+    session = request.session
+    print(session)  # Print session content for debugging
+    return {"message": "Session debug information printed"}
 
 @app.get("/")
 def read_root():
@@ -86,7 +102,7 @@ def read_root():
 
 
 @app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
     user = crud.get_user_by_username(db, form_data.username)
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
@@ -126,27 +142,39 @@ def get_chat_history(chat_box_id: int, db: Session = Depends(get_db), current_us
 
 @app.get("/auth/google")
 async def login_with_google(request: Request):
-    url = HOST + "/auth/google/callback"
-    return await oauth.google.authorize_redirect(request, url)
+    redirect_uri = request.url_for('google_callback')
+    session = request.session
+    print(session)  # Print session content for debugging
+    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get("/auth/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-
     # Complete the OAuth flow
+    session = request.session
+    print(session)  # Print session content for debugging
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as e:
         return JSONResponse(content={"error": e.error, "error_description": e.description, "error_uri": e.uri})
-    user_info = await oauth.google.parse_id_token(request, token)
+    user_info = token["userinfo"]
 
     user = crud.get_user_by_username(db, username=user_info['email'])
     if not user:
-        user_in = schemas.UserCreate(username=user_info['email'], password='google_oauth')
+        user_in = schemas.UserCreate(username=user_info['email'], password='sub', email=user_info['email'], full_name=user_info['name'])
         user = crud.create_user(db=db, user=user_in)
 
     access_token = create_access_token(data={"sub": user.username, "id": user.id})
     response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
     response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60)
+    return response
+
+@app.get('/logout')
+def logout(request: Request):
+    # Clear session data
+    request.session.clear()
+    # Redirect to home page and clear cookie
+    response = RedirectResponse(url='/')
+    response.delete_cookie('access_token')
     return response
 
 

@@ -111,7 +111,16 @@ async def login_for_access_token(form_data: schemas.UserLogin, db: Session = Dep
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.username, "id": user.id})
-    return Response(content=access_token, headers={"Set-Cookie": f"access_token={access_token}; Path=/; Max-Age={ACCESS_TOKEN_EXPIRE_MINUTES*60}; Secure; HttpOnly"})
+    response = JSONResponse(content={"access_token": access_token})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        secure=True,
+        path="/"
+    )
+    return response
 
 @app.post("/users/", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):

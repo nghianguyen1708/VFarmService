@@ -12,11 +12,15 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN \
- apk add --no-cache postgresql-libs && \
- apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev && \
- python3 -m pip install -r requirements.txt --no-cache-dir && \
- apk --purge del .build-deps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libpq-dev && \
+    python3 -m pip install --upgrade pip && \
+    python3 -m pip install psycopg2-binary && \
+    python3 -m pip install --no-cache-dir -r requirements.txt && \
+    apt-get remove -y gcc && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # Expose the port number on which the FastAPI app will run
 EXPOSE 8888

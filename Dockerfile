@@ -15,7 +15,6 @@ COPY . /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libpq-dev && \
     python3 -m pip install --upgrade pip && \
-    python3 -m pip install psycopg2-binary && \
     python3 -m pip install --no-cache-dir -r requirements.txt && \
     apt-get remove -y gcc && \
     apt-get autoremove -y && \

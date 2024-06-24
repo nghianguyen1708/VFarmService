@@ -1,0 +1,34 @@
+# Ignore version control files
+.git/
+.gitignore
+
+# Ignore development and system files
+*.pyc
+__pycache__/
+.idea/
+.vscode/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore dependency management files
+node_modules/
+venv/
+*.venv/
+
+# Ignore IDE and editor configuration
+.project
+.classpath
+
+# Ignore documentation and build artifacts
+docs/
+build/
+
+# Ignore tests and test results
+__tests__/
+coverage/
+
+# Ignore miscellaneous
+.DS_Store
+app/.env

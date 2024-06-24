@@ -10,6 +10,9 @@ WORKDIR /app
 
 # Copy the current directory contents into the container at /app
 COPY . /app
+# Copy Alembic files
+COPY alembic/ alembic/
+COPY alembic.ini .
 
 # Install any needed packages specified in requirements.txt
 RUN apt-get update && \
@@ -20,6 +23,10 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy the rest of the application code
+COPY . .
+
+RUN chmod +x entrypoint.sh
 
 # Expose the port number on which the FastAPI app will run
 EXPOSE 8888

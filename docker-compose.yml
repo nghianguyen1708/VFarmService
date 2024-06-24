@@ -1,24 +1,34 @@
-version: '3'
+version: '3.8'
 
 services:
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRESQL_DATABASE=vfarm_db
+      - POSTGRESQL_USERNAME=vfarmadmin
+      - POSTGRESQL_PASSWORD=vfarmadmin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U vfarmadmin"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+
   app:
     build:
       context: .
     ports:
       - "8888:8888"
     depends_on:
+      db:
+        condition: service_healthy
+    links:
       - db
 
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: vfarm_db
-      POSTGRES_USER: yourusername
-      POSTGRES_PASSWORD: yourpassword
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:

@@ -12,9 +12,11 @@ from fastapi.responses import JSONResponse
 from fastapi_sqlalchemy import DBSessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from starlette.middleware.sessions import SessionMiddleware
-from config import SECRET_KEY, DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, HOST
+from app.config import SECRET_KEY, DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, HOST
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
+from alembic import command
+from alembic.config import Config
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -185,7 +187,6 @@ def logout(request: Request):
     response = RedirectResponse(url='/')
     response.delete_cookie('access_token')
     return response
-
 
 if __name__ == "__main__":
     import uvicorn

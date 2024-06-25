@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi_sqlalchemy import DBSessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from starlette.middleware.sessions import SessionMiddleware
-from config import SECRET_KEY, DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, HOST
+from app.config import SECRET_KEY, DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI, HOST
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 
@@ -189,4 +189,4 @@ def logout(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, port=8888)
+    uvicorn.run("main:app", host="0.0.0.0", port=8888, reload=True)

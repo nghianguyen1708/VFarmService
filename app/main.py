@@ -122,7 +122,7 @@ async def login_for_access_token(form_data: schemas.UserLogin, db: Session = Dep
     )
     return response
 
-@app.post("/users/", response_model=schemas.User)
+@app.post("/users/", response_model=schemas.UserCreate)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
@@ -142,6 +142,12 @@ def create_chat_message(chat_box_id: int, chat_message: schemas.ChatMessageCreat
     if not crud.check_chatbox_ownership(db, user_id=current_user.id, chat_box_id=chat_box_id):
         raise HTTPException(status_code=403, detail="Not authorized to access this chat box")
     return crud.create_chat_message(db=db, chat_message=chat_message, chat_box_id=chat_box_id)
+
+@app.delete("/chatboxes/{chat_box_id}/", response_model=schemas.ChatBoxDeleteResponse)
+def delete_chat_box(chat_box_id: int, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
+    if not crud.check_chatbox_ownership(db, user_id=current_user.id, chat_box_id=chat_box_id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this chat box")
+    return JSONResponse(content={"result": crud.delete_chat_box(db, chat_box_id)})
 
 @app.get("/chatboxes/{chat_box_id}/messages/", response_model=List[schemas.ChatMessage])
 def get_chat_history(chat_box_id: int, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):

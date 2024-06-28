@@ -47,3 +47,6 @@ class ChatMessage(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ChatBoxDeleteResponse(BaseModel):
+    result: bool

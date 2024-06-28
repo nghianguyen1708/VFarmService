@@ -43,3 +43,14 @@ def get_chat_history(db: Session, chat_box_id: int):
 def check_chatbox_ownership(db: Session, user_id: int, chat_box_id: int) -> bool:
     chat_box = db.query(models.ChatBox).filter(models.ChatBox.id == chat_box_id, models.ChatBox.user_id == user_id).first()
     return chat_box is not None
+
+def delete_chat_box(db: Session, chat_box_id: int):
+    try:
+        db.query(models.ChatHistory).filter(models.ChatHistory.chat_box_id == chat_box_id).delete()
+        db.query(models.ChatBox).filter(models.ChatBox.id == chat_box_id).delete()
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(e)
+        return False
